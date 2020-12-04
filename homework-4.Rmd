@@ -17,7 +17,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidyverse)
 library(gender)
-library(maps)
 library(leaflet)
 ```
 
@@ -157,7 +156,31 @@ airbnb %>%
 
 ```
 
-# Expensive Rentals on a Map
+### Description Effect on Price
+
+```{r}
+# Counting the number of words in each description
+airbnb$name_length <- 0
+num <- 1
+
+for(i in airbnb$name){
+  airbnb$name_length[num] <- sapply(strsplit(i, " "), length)
+  num <- num + 1
+}
+
+name_length_price <- slice(airbnb, name_length, price)
+
+# Scatterplot that shows description length vs. price
+name_length_price %>%
+  filter(price < 1000) %>%
+  ggplot(aes(x = name_length, y = price, alpha = .35)) + geom_point()
+```
+
+```{r}
+
+```
+
+## Expensive Rentals on a Map
 
 ```{r}
 lat_long_price <- airbnb[order(-airbnb$price),]
@@ -166,10 +189,5 @@ lat_long_price <- slice(select(lat_long_price, latitude, longitude, price), 1:10
 leaflet() %>% 
   addProviderTiles(providers$Esri.WorldGrayCanvas) %>% 
   addCircles(data = lat_long_price, weight = 5)
-```
-
-
-```{r}
-
 ```
 
