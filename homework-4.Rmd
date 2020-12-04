@@ -2,7 +2,10 @@
 title: "homework-4"
 author: "Riley Maher"
 date: "12/2/2020"
-output: html_document
+output: 
+  html_document: 
+    toc: yes
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -18,6 +21,10 @@ library(ggplot2)
 library(tidyverse)
 library(gender)
 library(leaflet)
+library(udpipe)
+library(textrank)
+
+model <- udpipe_download_model(language = "english")
 ```
 
 ## Reading Data
@@ -81,7 +88,7 @@ borough_split
 # Number of airbnbs in the cities in the largest borough in NYC
 airbnb %>%
   filter(neighbourhood_group == "Manhattan") %>%
-  ggplot(aes(x=neighbourhood)) + geom_bar() +theme(axis.text.x = element_text(angle = 90))
+  ggplot(aes(x=neighbourhood)) + geom_bar() + theme(axis.text.x = element_text(angle = 90))
 
 ```
 
@@ -158,6 +165,8 @@ airbnb %>%
 
 ### Description Effect on Price
 
+#### Length of Description on Price
+
 ```{r}
 # Counting the number of words in each description
 airbnb$name_length <- 0
@@ -176,8 +185,90 @@ name_length_price %>%
   ggplot(aes(x = name_length, y = price, alpha = .35)) + geom_point()
 ```
 
-```{r}
+#### Frequency of Key Words on Price
 
+```{r}
+# I used this block to create a CSV with the most frequent bigrams. I stored it in a CSV because it took pretty long to run. 
+
+# udmodel <- udpipe_load_model(model$file_model)
+# 
+# desc <- udpipe_annotate(udmodel, airbnb$name)
+# desc <- data.frame(desc)
+# 
+# keyw <- textrank_keywords(desc$lemma,
+#                           relevant = desc$upos %in% c("NOUN", "VERB", "ADJ"))
+# sub_key <- subset(keyw$keywords, ngram >1 & freq > 1)
+# write.csv(sub_key, file = "Word_Freq.csv")
+```
+
+```{r}
+# Load in frequency CSV and get top 10 bigrams for all descriptions
+word_freq <- read.csv('Word_Freq.csv')
+word_freq$X <- NULL
+word_freq <- slice(word_freq, 1:10)
+
+# Bar graph of top 10 frequent bigrams
+word_freq %>%
+  ggplot(aes(x = keyword, y = freq)) +
+  geom_bar(stat='identity') +
+  theme(axis.text.x = element_text(angle = -60))
+```
+
+```{r}
+# Wrote more CSVs to once again speed up the process
+
+# # Creating the top and bottom 1000 priced airbnbs
+# ordered_bnb <- airbnb[order(-airbnb$price),]
+# top_1000 <- slice(select(ordered_bnb, name), 1:1000)
+# bottom_1000 <- slice(select(ordered_bnb, name), 48895:47895)
+# 
+# # Finding the most frequent bigrams for the top 1000 priced airbnbs
+# desc_top <- udpipe_annotate(udmodel, top_1000$name)
+# desc_top <- data.frame(desc_top)
+# 
+# keyw_top <- textrank_keywords(desc_top$lemma,
+#                           relevant = desc_top$upos %in% c("NOUN", "VERB", "ADJ"))
+# sub_key_top <- subset(keyw_top$keywords, ngram >1 & freq > 1)
+# 
+# # Finding the most frequent bigrams for the bottom 1000 priced airbnbs
+# desc_bottom <- udpipe_annotate(udmodel, bottom_1000$name)
+# desc_bottom <- data.frame(desc_bottom)
+# 
+# keyw_bottom <- textrank_keywords(desc_bottom$lemma,
+#                           relevant = desc_bottom$upos %in% c("NOUN", "VERB", "ADJ"))
+# sub_key_bottom <- subset(keyw_bottom$keywords, ngram >1 & freq > 1)
+# 
+# # Writing CSVs for the top and bottom 1000 priced frequent bigrams
+# write.csv(sub_key_top, file = "Top_Word_Freq.csv")
+# write.csv(sub_key_bottom, file = "Bottom_Word_Freq.csv")
+```
+
+```{r}
+# Load in frequency CSV and get top 10 bigrams for top 1000 descriptions
+top_word_freq <- read.csv('Top_Word_Freq.csv')
+top_word_freq$X <- NULL
+top_word_freq <- slice(top_word_freq, 1:10)
+
+# Bar graph of top 10 frequent bigrams in top 1000 priced airbnbs
+top_word_freq %>%
+  ggplot(aes(x = keyword, y = freq)) +
+  geom_bar(stat='identity') +
+  theme(axis.text.x = element_text(angle = -60))
+```
+
+
+
+```{r}
+# Load in frequency CSV and get top 10 bigrams for bottom 1000 descriptions
+bottom_word_freq <- read.csv('Bottom_Word_Freq.csv')
+bottom_word_freq$X <- NULL
+bottom_word_freq <- slice(bottom_word_freq, 1:10)
+
+# Bar graph of top 10 frequent bigrams in bottom 1000 priced airbnbs
+bottom_word_freq %>%
+  ggplot(aes(x = keyword, y = freq)) +
+  geom_bar(stat='identity') +
+  theme(axis.text.x = element_text(angle = -60))
 ```
 
 ## Expensive Rentals on a Map
