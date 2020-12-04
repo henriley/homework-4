@@ -1,0 +1,175 @@
+---
+title: "homework-4"
+author: "Riley Maher"
+date: "12/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Homework 4
+
+## Importing Packages
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(gender)
+library(maps)
+library(leaflet)
+```
+
+## Reading Data
+
+```{r}
+# Reading in and cleaning the data
+airbnb <- read.csv('Modified_AB_NYC_2019.csv')
+airbnb$id <- NULL
+airbnb$X <- NULL
+airbnb$reviews_per_month <- ifelse(is.na(airbnb$reviews_per_month) == TRUE, 0,
+                                   airbnb$reviews_per_month)
+
+head(airbnb)
+```
+
+## Data Structure and Summary
+
+```{r}
+# Structure of the data
+str(airbnb)
+```
+
+```{r}
+# Summary of the data
+summary(airbnb)
+```
+
+## Initial Data Analysis
+
+### Room Type Breakdown
+
+```{r}
+# Barplot of types of airbnbs
+home_split <- ggplot(airbnb, aes(x=room_type)) + geom_bar()
+home_split
+```
+
+```{r}
+# Average price by room type
+price_per_airbnb_type <- round(tapply(airbnb$price,
+                                      airbnb$room_type, mean, na.rm=TRUE), 2)
+price_per_airbnb_type
+```
+
+```{r}
+# Average number of reviews by room type
+reviews_per_airbnb_type <- tapply(airbnb$reviews_per_month,
+                                   airbnb$room_type, mean, na.rm=TRUE)
+reviews_per_airbnb_type
+```
+
+### Borough Type Breakdown
+
+```{r}
+# Number of airbnbs by borough type
+borough_split <- ggplot(data = airbnb, aes(x = neighbourhood_group)) + geom_bar()
+borough_split
+```
+
+```{r}
+# Number of airbnbs in the cities in the largest borough in NYC
+airbnb %>%
+  filter(neighbourhood_group == "Manhattan") %>%
+  ggplot(aes(x=neighbourhood)) + geom_bar() +theme(axis.text.x = element_text(angle = 90))
+
+```
+
+```{r}
+# Average price per neighborhood group
+price_per_neighborhood <- round(tapply(airbnb$price,
+                                      airbnb$neighbourhood_group, mean, na.rm=TRUE), 2)
+price_per_neighborhood
+```
+
+## Exploratory Data Analysis
+
+### Minimum Nights by Price
+
+```{r}
+# Scatterplot of price by minimum night
+airbnb %>%
+  filter(price < 1000) %>%
+  ggplot(aes(x = minimum_nights, y = price)) + geom_point() + geom_smooth()
+
+```
+
+### Price by Gender
+
+```{r}
+# I used this loop to get the genders of all the names. It took a super long time so I created a new CSV with it. I left it here commented out to show you.
+
+# airbnb$gender <- "other"
+# num <- 1
+# 
+# for(i in airbnb$host_name) {
+#   if (nrow(gender(i)['gender']) == 0) {
+#     airbnb$gender[num] <- "other"
+#   }
+#   else if (nrow(gender(i)['gender']) == 1 & gender(i)['gender'] == "male"){
+#     airbnb$gender[num] <- "male"
+#   }
+#   else if (nrow(gender(i)['gender']) == 1 & gender(i)['gender'] == "female"){
+#     airbnb$gender[num] <- "female"
+#   }
+#   num <- num + 1
+# }
+# 
+# write.csv(airbnb, file = "Modified_AB_NYC_2019.csv")
+
+# Calculating the average rental price by borough
+price_per_gender <- sort(round(tapply(airbnb$price, airbnb$gender, mean, na.rm=TRUE), 2))
+price_per_gender
+
+# Calculatiing the average rental rate by gender
+barplot(price_per_gender)
+```
+
+### Rental Rates by Borough
+
+```{r}
+# Calculating the average rental rate by borough
+rental_rates <- sort(round(tapply(airbnb$price, airbnb$neighbourhood_group, mean, na.rm=TRUE), 2))
+rental_rates
+
+# Plotting the rental rates by borough
+barplot(rental_rates)
+```
+
+### Review Importance
+
+```{r}
+# Scatterplot of reviews per airbnb less than $1000
+airbnb %>%
+  filter(price < 1000) %>%
+  ggplot(aes(x = number_of_reviews, y = price, alpha = .35)) + geom_point() + geom_smooth()
+
+```
+
+# Expensive Rentals on a Map
+
+```{r}
+lat_long_price <- airbnb[order(-airbnb$price),]
+lat_long_price <- slice(select(lat_long_price, latitude, longitude, price), 1:100)
+
+leaflet() %>% 
+  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% 
+  addCircles(data = lat_long_price, weight = 5)
+```
+
+
+```{r}
+
+```
+
