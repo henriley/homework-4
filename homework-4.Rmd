@@ -220,7 +220,7 @@ word_freq %>%
   geom_bar(stat='identity') +
   theme(axis.text.x = element_text(angle = -60))
 ```
-```{r, CACHE=true}
+```{r}
 
 # Creating vectors to assign to new dataframe columns
 for (i in 1:10){
