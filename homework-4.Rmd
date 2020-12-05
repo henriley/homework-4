@@ -37,7 +37,7 @@ airbnb$X <- NULL
 airbnb$reviews_per_month <- ifelse(is.na(airbnb$reviews_per_month) == TRUE, 0,
                                    airbnb$reviews_per_month)
 
-head((airbnb)
+head(airbnb)
 ```
 
 ## Data Structure and Summary
@@ -140,7 +140,7 @@ price_per_gender <- sort(round(tapply(airbnb$price, airbnb$gender, mean, na.rm=T
 price_per_gender
 
 # Calculatiing the average rental rate by gender
-barplot(price_per_geder)
+barplot(price_per_gender)
 
 ```
 
