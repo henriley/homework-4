@@ -37,7 +37,7 @@ airbnb$X <- NULL
 airbnb$reviews_per_month <- ifelse(is.na(airbnb$reviews_per_month) == TRUE, 0,
                                    airbnb$reviews_per_month)
 
-head(airbnb)
+head((airbnb)
 ```
 
 ## Data Structure and Summary
@@ -114,14 +114,12 @@ airbnb %>%
 ### Price by Gender
 
 ```{r}
-# I used this loop to get the genders of all the names. It took a super long time so I created a new CSV with it. I left it here commented out to show you.
-
-# Merge function,join function
+# I used this loop to get the genders of all the names. It took a super long time so I created a new CSV with it. I left it here commented out to show you.# airbnb$gender <- "other"
 
 # airbnb$gender <- "other"
 # num <- 1
 # 
-# for(i in airbnb$host_name[1:700]) {
+# for(i in airbnb$host_name) {
 #   if (nrow(gender(i)['gender']) == 0) {
 #     airbnb$gender[num] <- "other"
 #   }
@@ -131,6 +129,7 @@ airbnb %>%
 #   else {
 #     airbnb$gender[num] <- "female"
 #   }
+#   print(num)
 #   num <- num + 1
 # }
 # 
@@ -141,7 +140,7 @@ price_per_gender <- sort(round(tapply(airbnb$price, airbnb$gender, mean, na.rm=T
 price_per_gender
 
 # Calculatiing the average rental rate by gender
-barplot(price_per_gender)
+barplot(price_per_geder)
 
 ```
 
