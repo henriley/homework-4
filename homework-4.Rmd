@@ -57,10 +57,18 @@ summary(airbnb)
 ### Room Type Breakdown
 
 ```{r}
-# Barplot of types of airbnbs
-home_split <- ggplot(airbnb, aes(x=room_type)) + geom_bar()
-home_split
+# Pie Chart of types of airbnbs
+wiz <- data.frame(table(airbnb$room_type))
+names(wiz)[names(wiz) == "Var1"] <- "Airbnb_Type"
+names(wiz)[names(wiz) == "Freq"] <- "Number_of_Occurrences"
+
+wiz %>%
+  ggplot(aes(x="", y=Number_of_Occurrences, fill=Airbnb_Type)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)
 ```
+
+The most common type of airbnb is the `r wiz["Airbnb_Type"][1, 1]` airbnb type with `r wiz["Number_of_Occurrences"][1, 1]` occurrences. The second most is the `r wiz["Airbnb_Type"][2, 1]` airbnb type with `r wiz["Number_of_Occurrences"][2, 1]` occurrences. The difference between the two is very small, with very few options being the `r wiz["Airbnb_Type"][3, 1]` type.
 
 ```{r}
 # Average price by room type
@@ -69,6 +77,8 @@ price_per_airbnb_type <- round(tapply(airbnb$price,
 price_per_airbnb_type
 ```
 
+When we look at the average price for each airbnb type, we get that the `r names(price_per_airbnb_type[1])` airbnb type is the most expensive. This makes sense because you get more space in a home rather than in a room. The least expensive is `r names(price_per_airbnb_type[3])`, which also makes sense, as you would probably be sharing a room with someone else to save money.
+
 ```{r}
 # Average number of reviews by room type
 reviews_per_airbnb_type <- tapply(airbnb$reviews_per_month,
@@ -76,28 +86,47 @@ reviews_per_airbnb_type <- tapply(airbnb$reviews_per_month,
 reviews_per_airbnb_type
 ```
 
+The number of reviews per type doesn't differ greatly between the airbnb types. The airbnb type with the most reviews on average is `r names(reviews_per_airbnb_type[2])`.
+
 ### Borough Type Breakdown
 
 ```{r}
 # Number of airbnbs by borough type
-borough_split <- ggplot(data = airbnb, aes(x = neighbourhood_group)) + geom_bar()
-borough_split
+borough_group <- data.frame(sort(table(airbnb$neighbourhood_group)))
+names(borough_group)[names(borough_group) == "Var1"] <- "Borough"
+
+borough_group %>%
+  ggplot(aes(x = Borough, y = Freq)) +
+  labs(title="Number Airbnbs per Borough", x="Borough Name", y="Count") +
+  geom_bar(stat = 'identity')
 ```
+
+As we can see, the top two boroughs where airbnbs are located are `r borough_group['Borough'][5, 1]` and `r borough_group['Borough'][4, 1]` respectively. The amount of airbnbs in the other three boroughs combined are less than the total amount of airbnbs in `r borough_group['Borough'][4, 1]`.
 
 ```{r}
 # Number of airbnbs in the cities in the largest borough in NYC
-airbnb %>%
-  filter(neighbourhood_group == "Manhattan") %>%
-  ggplot(aes(x=neighbourhood)) + geom_bar() + theme(axis.text.x = element_text(angle = 90))
-
+city_group <- data.frame(sort(table(select(filter(airbnb, neighbourhood_group == "Manhattan"), neighbourhood))))
+                         
+city_group %>%
+  ggplot(aes(x=Var1, y=Freq)) +
+  geom_bar(stat='identity') +
+  labs(title="Number Airbnbs per City in Largest Borough", x="City Name", y="Count") +
+  theme(axis.text.x = element_text(angle = 90))
 ```
+
+As we can see, the top two cities where airbnbs are in Manhattan are `r city_group[32, 1]` and `r city_group[31, 1]` respectively.
 
 ```{r}
 # Average price per neighborhood group
-price_per_neighborhood <- round(tapply(airbnb$price,
-                                      airbnb$neighbourhood_group, mean, na.rm=TRUE), 2)
+price_per_neighborhood <- sort(round(tapply(airbnb$price,
+                                      airbnb$neighbourhood_group, mean, na.rm=TRUE), 2))
 price_per_neighborhood
+
+# Plotting the rental rates by borough
+barplot(price_per_neighborhood)
 ```
+
+The most expensive borough for airbnbs is `r names(price_per_neighborhood[5])` and the second most expensive is `r names(price_per_neighborhood[4])`. On top of that, the most airbnbs are located in `r names(price_per_neighborhood[5])` and the second most are located in `r names(price_per_neighborhood[4])`. A good future study with this data would be to see population size of the two boroughs and to see which tourist attractions are closest to each borough to see if the increased prices are justifiable.
 
 ## Exploratory Data Analysis
 
@@ -107,9 +136,11 @@ price_per_neighborhood
 # Scatterplot of price by minimum night
 airbnb %>%
   filter(price < 1000) %>%
-  ggplot(aes(x = minimum_nights, y = price)) + geom_point() + geom_smooth()
-
+  ggplot(aes(x = minimum_nights, y = price)) + geom_point() + geom_smooth() +
+  labs(title="Price of Airbnb by Minimum Nights", x="Minimum Nights", y="Price")
 ```
+
+This graph is being used to see how the number of minimum nights affects the price per night of the airbnb. From this graph, we can see that with an airbnb that costs more per night, fewer nights are required to be rented, which would be in line with strategic business practices.
 
 ### Price by Gender
 
@@ -137,23 +168,13 @@ airbnb %>%
 
 # Calculating the average rental price by borough
 price_per_gender <- sort(round(tapply(airbnb$price, airbnb$gender, mean, na.rm=TRUE), 2))
-price_per_gender
 
 # Calculatiing the average rental rate by gender
 barplot(price_per_gender)
 
 ```
 
-### Rental Rates by Borough
-
-```{r}
-# Calculating the average rental rate by borough
-rental_rates <- sort(round(tapply(airbnb$price, airbnb$neighbourhood_group, mean, na.rm=TRUE), 2))
-rental_rates
-
-# Plotting the rental rates by borough
-barplot(rental_rates)
-```
+For price by gender, it seems that `r names(price_per_gender)[3]` charges more on average. Other is a combination of male, female, an combinations of owners, so it's difficult to make an analysis for this group. For the other group, it seems that `r names(price_per_gender)[2]`s charge more than `r names(price_per_gender)[1]`s on average for their airbnb rentals.
 
 ### Review Importance
 
@@ -161,9 +182,13 @@ barplot(rental_rates)
 # Scatterplot of reviews per airbnb less than $1000
 airbnb %>%
   filter(price < 1000) %>%
-  ggplot(aes(x = number_of_reviews, y = price, alpha = .35)) + geom_point() + geom_smooth()
-
+  ggplot(aes(x = number_of_reviews, y = price, alpha = .35)) +
+  geom_point() +
+  geom_smooth() +
+  labs(title="Price of Airbnb by Number of Reviews", x="Number of Reviews", y="Price")
 ```
+
+Interestingly, the more expensive an airbnb is, the more reviews it tends to have. We can take that analysis two ways: people expect to get quality for higher priced airbnbs and want to voice their opinions on staying there or because an airbnb owner is getting more people to rent their place, they feel like they can charge more. A good data set to compare this with would be review scores per airbnb and not just amount of reviews per airbnb.
 
 ### Description Effect on Price
 
@@ -184,8 +209,12 @@ name_length_price <- slice(airbnb, name_length, price)
 # Scatterplot that shows description length vs. price
 name_length_price %>%
   filter(price < 1000) %>%
-  ggplot(aes(x = name_length, y = price, alpha = .35)) + geom_point()
+  ggplot(aes(x = name_length, y = price, alpha = .35)) +
+  geom_point()  +
+  labs(title="Price of Airbnb by Description Length", x="Description Length (Number of Words)", y="Price")
 ```
+
+It seems that the price of an airbnb is somewhat correlated with the length of the description. The distribution seems to be normal, meaning that having a description with four words or less or eight words or more does not correlate to higher priced airbnbs. The sweet spot that gets the most money are descriptions that are from five to seven words long. Being too descriptive or not descriptive enough hurts the owner.
 
 #### Frequency of Key Words on Price
 
@@ -215,10 +244,14 @@ word_freq <- slice(word_freq, 1:10)
 
 # Bar graph of top 10 most frequent words
 word_freq %>%
-  ggplot(aes(x = keyword, y = freq)) +
+  ggplot(aes(x = reorder(keyword, freq), y = freq)) +
   geom_bar(stat='identity') +
-  theme(axis.text.x = element_text(angle = -60))
+  theme(axis.text.x = element_text(angle = -60))  +
+  labs(title="Top 10 Most Frequent Keywords", x="Words", y="Frequency")
 ```
+
+This is the top 10 most frequent words in every description. It makes sense that `r word_freq[1,1]` is the top word as most people would be describing their airbnb with the word "room". The second most used word is `r word_freq[2,1]`, and I would assume that's to entice people to rent their airbnb because its in the "Heart of the City".
+
 ```{r}
 
 # Creating vectors to assign to new dataframe columns
@@ -245,7 +278,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'room' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
 
+It doesn't look like having the word "room" in the description correlates to a higher price for the airbnb. It makes sense as most of the owners would probably have the word "room" when describing their listing.
+
+```{r}
 # Heart vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -253,7 +290,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'heart' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
 
+The word "heart" does seem to correlate to higher pricing. The average price of descriptions with the word "heart" in them is higher than those without, and the overall range of prices is also higher. It makes sense because people would be willing to pay more to be in the "Heart of the City". 
+
+```{r}
 # Apartment vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -261,7 +302,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'apartment' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
 
+The word "apartment" does seem to correlate to slightly higher pricing. The average price of descriptions with the word "apartment" in them is higher than those without, and the overall range of prices is also higher. It makes sense because people would be willing to pay more to be for their own apartment. 
+
+```{r}
 # Bedroom vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -269,7 +314,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'bedroom' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
 
+The word "bedroom" doesn't seem to correlate to higher pricing of airbnbs.
+
+```{r}
 # Cozy vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -277,7 +326,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'cozy' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
+Surprisingly, the word "cozy" doesn't correlate to higher pricing. In fact, the pricing of airbnbs with "cozy" in the description correlate with lower pricing. That's probably because "cozy" is just a fancy way to say "small", and they can't charge as much for smaller places.
 
+
+```{r}
 # Spacious vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -285,7 +338,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'spacious' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
 
+Surprisingly, the word "spacious" doesn't correlate to higher pricing. In fact, the pricing of airbnbs with "spacious" in the description correlate with lower pricing. That's probably because nothing is "spacious" in New York City.
+
+```{r}
 # Manhattan vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -293,7 +350,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'Manhattan' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
 
+The word "Manhattan" does not correlate with higher priced airbnbs.
+
+```{r}
 # Min vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -301,7 +362,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'min' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
 
+The word "min" does not correlate with higher priced airbnbs. The word "min" probably refers to "minute", which is used to described how many minutes away the airbnb would be from a certain locaation i.e "5 min from city".
+
+```{r}
 # Sunny vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -309,7 +374,11 @@ airbnb %>%
   geom_boxplot() +
   labs(title="Keyword 'sunny' Affect on Price", x="Keyword Included", y="Price ($)") +
   stat_summary(fun=mean, geom="point", shape=23, size=4)
+```
 
+The word "sunny" doesn't correlate to higher pricing. In fact, the pricing of airbnbs with "sunny" in the description correlate with lower pricing.
+
+```{r}
 # Close vs. Price Boxplot
 airbnb %>%
   filter(price < 1000) %>%
@@ -319,6 +388,7 @@ airbnb %>%
   stat_summary(fun=mean, geom="point", shape=23, size=4)
 ```
 
+The word "close" doesn't correlate to higher pricing. In fact, the pricing of airbnbs with "close" in the description correlate with lower pricing.
 
 ```{r}
 # Wrote more CSVs to once again speed up the process
@@ -363,12 +433,12 @@ top_word_freq <- slice(top_word_freq, 1:10)
 
 # Bar graph of top 10 frequent words in top 1000 priced airbnbs
 top_word_freq %>%
-  ggplot(aes(x = keyword, y = freq)) +
+  ggplot(aes(x = reorder(keyword, freq), y = freq)) +
   geom_bar(stat='identity') +
   theme(axis.text.x = element_text(angle = -60))
 ```
 
-
+I found the most frequent keywords for the 1000 most expensive airbnbs. The word "room" makes the list but at position ten as opposed to one. We see other words like "luxury", "townhouse", and "loft" that are probably in the descriptions to justify the higher pricing of the airbnbs.
 
 ```{r}
 # Load in frequency CSV and get top 10 words for bottom 1000 descriptions
@@ -378,10 +448,12 @@ bottom_word_freq <- slice(bottom_word_freq, 1:10)
 
 # Bar graph of top 10 frequent words in bottom 1000 priced airbnbs
 bottom_word_freq %>%
-  ggplot(aes(x = keyword, y = freq)) +
+  ggplot(aes(x = reorder(keyword, freq), y = freq)) +
   geom_bar(stat='identity') +
   theme(axis.text.x = element_text(angle = -60))
 ```
+
+I found the most frequent keywords for the 1000 least expensive airbnbs. The word "room" is once again at the top of the list. As we can see, the words that did not correlate to higher prices, like "cozy", "close", and "min", also appear on this list.
 
 ## Expensive Rentals on a Map
 
@@ -394,3 +466,4 @@ leaflet() %>%
   addCircles(data = lat_long_price, weight = 5)
 ```
 
+The majority of the most expensive airbnbs appear in Manhattan. This is in line with the graphs from above that showed that Manhattan has the most airbnbs and that it has the most expensive pricing for airbnbs on average.
